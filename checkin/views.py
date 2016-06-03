@@ -74,4 +74,21 @@ def create(request):
     return HttpResponse(status=200)
 
 def read(request):
-    pass
+    if not request.method == 'GET':
+        return HttpResponse(status=400)
+
+    date = Checkin.objects.order_by('-date')[0].date
+    checkin = Checkin.objects.filter(date=date)
+
+    response_data = []
+    for c in checkin:
+        like = Like.objects.filter(place=c.place, date=date)[0]
+        tmp = model_to_dict(c)
+        tmp['name'] = c.place.name
+        tmp['like'] = like.like
+        tmp['date'] = str(tmp['date'])
+        tmp['longitude'] = c.place.longitude
+        tmp['latitude'] = c.place.latitude
+        response_data.append(tmp)
+
+    return HttpResponse(json.dumps(response_data), status=200, content_type='application/json')
